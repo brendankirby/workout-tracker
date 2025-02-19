@@ -18,13 +18,23 @@ document.addEventListener('DOMContentLoaded', function() {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
   }
 
-  // Update the UI for each user based on their workout status
+  // Update the UI for each user based on their workout status.
+  // If a user has worked out (true), display their name with a 💪 emoji.
   function updateUserUI(users) {
     for (let user in users) {
-       const statusElem = document.getElementById('status-' + user);
-       if (statusElem) {
-           statusElem.textContent = users[user] ? '✅' : '❌';
-       }
+      const userRow = document.querySelector(`.user-row[data-user="${user}"]`);
+      const nameElem = userRow.querySelector('.name');
+      const statusElem = document.getElementById('status-' + user);
+
+      // Set the status emoji (✅ for true, ❌ for false)
+      if (statusElem) {
+        statusElem.textContent = users[user] ? '✅' : '❌';
+      }
+
+      // Append the muscle emoji if worked out, otherwise show plain name.
+      if (nameElem) {
+        nameElem.textContent = users[user] ? `${user} 💪` : user;
+      }
     }
   }
 
@@ -40,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // --- New Code: Motivational Quote Feature ---
+  // --- Motivational Quote Feature ---
 
   // 10 quotes when none of you worked out.
   const quotesNone = [
@@ -94,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let quote = "";
 
     if (workedOut.length === 0) {
-      // No one worked out: pick a random quote from quotesNone.
+      // No one worked out.
       quote = quotesNone[Math.floor(Math.random() * quotesNone.length)];
     } else if (workedOut.length === 1) {
       // One person worked out.
@@ -113,37 +123,32 @@ document.addEventListener('DOMContentLoaded', function() {
                    .replace("{winner2}", winners[1])
                    .replace("{loser}", loser);
     } else {
-      // All three worked out: provide a generic praise message.
+      // All three worked out: generic praise.
       quote = "Amazing! All three of you crushed it today!";
     }
     motivationalQuoteElem.textContent = quote;
   }
 
-  // Check if the stored workout date matches today (in PT). If not, process the previous day’s data.
+  // Check if the stored workout date matches today (in PT).
+  // If not, process the previous day's data: update the streak and reset statuses.
   function checkAndResetIfNewDay(workoutData, currentStreak) {
     const today = getCurrentDatePT();
     if (!workoutData || workoutData.date !== today) {
       let allWorked = false;
       if (workoutData && workoutData.users) {
-          // If every user has a true value, they all worked out.
-          allWorked = Object.values(workoutData.users).every(status => status === true);
+        allWorked = Object.values(workoutData.users).every(status => status === true);
       }
-      if (allWorked) {
-          // Increment streak if everyone worked out.
-          const newStreak = (currentStreak || 0) + 1;
-          database.ref().update({ streak: newStreak });
-      } else {
-          // Reset the streak if not all worked out.
-          database.ref().update({ streak: 0 });
-      }
+      const newStreak = allWorked ? (currentStreak || 0) + 1 : 0;
+      database.ref().update({ streak: newStreak });
+
       // Reset the workout record for the new day.
       database.ref('workout').set({
-          date: today,
-          users: {
-              Brendan: false,
-              Keegan: false,
-              Phill: false
-          }
+        date: today,
+        users: {
+          Brendan: false,
+          Keegan: false,
+          Phill: false
+        }
       });
     }
   }
@@ -152,13 +157,13 @@ document.addEventListener('DOMContentLoaded', function() {
   database.ref().on('value', snapshot => {
     const data = snapshot.val();
     if (data) {
-      // Ensure we are using the correct day.
+      // Check for a new day and reset if necessary.
       checkAndResetIfNewDay(data.workout, data.streak);
-      
+
       // Update the UI for each friend.
       if (data.workout && data.workout.users) {
-          updateUserUI(data.workout.users);
-          updateMotivationalQuote(data.workout.users);
+        updateUserUI(data.workout.users);
+        updateMotivationalQuote(data.workout.users);
       }
       // Update the streak counter.
       updateStreakUI(data.streak || 0);
@@ -169,13 +174,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const userRows = document.querySelectorAll('.user-row');
   userRows.forEach(row => {
     row.addEventListener('click', function() {
-       const user = this.getAttribute('data-user');
-       const statusRef = database.ref('workout/users/' + user);
-       // Toggle the status: read the current value, then set it to the opposite.
-       statusRef.once('value').then(snapshot => {
-         const currentStatus = snapshot.val();
-         statusRef.set(!currentStatus);
-       });
+      const user = this.getAttribute('data-user');
+      const statusRef = database.ref('workout/users/' + user);
+      // Toggle the status: read the current value, then set it to the opposite.
+      statusRef.once('value').then(snapshot => {
+        const currentStatus = snapshot.val();
+        statusRef.set(!currentStatus);
+        // Play toggle sound if available
+        const toggleSound = document.getElementById('toggleSound');
+        if (toggleSound) {
+          toggleSound.play().catch(err => console.log("Sound play error:", err));
+        }
+      });
     });
   });
 });
