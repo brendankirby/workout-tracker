@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Workout Tracker</h1>
+    <div class="tracker">
+      <div class="user-row" data-user="Brendan">
+        <span class="name">Brendan</span>
+        <span class="status" id="status-Brendan">❌</span>
+      </div>
+      <div class="user-row" data-user="Keegan">
+        <span class="name">Keegan</span>
+        <span class="status" id="status-Keegan">❌</span>
+      </div>
+      <div class="user-row" data-user="Phill">
+        <span class="name">Phill</span>
+        <span class="status" id="status-Phill">❌</span>
+      </div>
+    </div>
+    <div class="streak-container" id="streakContainer" style="display: none;">
+      <span id="streakDisplay"></span>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
